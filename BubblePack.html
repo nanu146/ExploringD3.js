@@ -1,0 +1,169 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+
+    <script src="Scripts/d3.v3.min.js"></script>
+   <style type="text/css">
+       .categories:hover {
+           stroke:dimgray;
+           stroke-width:3px;
+           stroke-opacity:0.5;
+       }
+
+   </style>
+</head>
+<body>
+    <script type="text/javascript">
+        var DateColor;
+
+        function getTextWidth(text, font) {
+            // re-use canvas object for better performance
+            var canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+            var context = canvas.getContext("2d");
+            context.font = font;
+            var metrics = context.measureText(text);
+            return metrics.width;
+        }
+
+
+        var Root = {};
+        var node;
+        Data = [
+        { Date: "2016-05-23", Categories: [{ Name: "category1", Value: 560 }, { Name: "category2", Value: 354 }, { Name: "category3", Value: 354 }, { Name: "category4", Value: 354 }, { Name: "category5", Value: 354 }] },
+        { Date: "2016-05-24", Categories: [{ Name: "category1", Value: 452 }, { Name: "category2", Value: 485 }, { Name: "category3", Value: 569 }, { Name: "category4", Value: 354 }, { Name: "category5", Value: 354 }] },
+        { Date: "2016-05-25", Categories: [{ Name: "category1", Value: 963 }, { Name: "category2", Value: 632 }, { Name: "category3", Value: 213 }, { Name: "category4", Value: 354 }, { Name: "category5", Value: 354 }] },
+        { Date: "2016-05-26", Categories: [{ Name: "category1", Value: 356 }, { Name: "category2", Value: 452 }, { Name: "category3", Value: 654 }, { Name: "category4", Value: 354 }, { Name: "category5", Value: 354 }] },
+        { Date: "2016-05-27", Categories: [{ Name: "category1", Value: 401 }, { Name: "category2", Value: 231 }, { Name: "category3", Value: 572 }, { Name: "category4", Value: 354 }, { Name: "category5", Value: 354 }] }
+        ];
+
+
+        BubbleArray = new Array();
+        window.onload = function () {
+            var Categories, Days;
+             DateColor = d3.scale.category10();
+
+            BubbleDS = {};
+            Data.forEach(function (d) {
+                d.Categories.forEach(function (b, i) {
+                    // checking if the category is already added 
+                    FoundAt = KeyValueindex(BubbleArray, "name", b.Name);
+                    if (FoundAt > -1) {
+                        temp = BubbleArray[KeyValueindex(BubbleArray, "name", b.Name)];
+                        temp.children.push({ "name": d.Date, "value": b.Value, "color": DateColor(d.Date) });
+                    }
+                        //if not found new object is created and pushed into array
+                    else {
+                        temp = new Object();
+                        temp.name = b.Name;
+                        temp.children = new Array();
+                        temp.children.push({ "name": d.Date, "value": b.Value, color: DateColor(d.Date) });
+                        BubbleArray.push(temp);
+                    }
+
+                });
+            });
+
+
+            Root.name = "main"
+            Root.children = BubbleArray;
+            Bubblechart(Root)
+
+        }
+
+
+        function KeyValueindex(array, key, value) {
+            var FoundAt = -1;
+            array.forEach(function (d, i) {
+                if (d[key] == value) {
+                    FoundAt = i;
+                }
+            })
+
+            return FoundAt > -1 ? FoundAt : -1;
+        }
+
+    </script>
+    <script type="text/javascript">
+      
+
+        function Bubblechart(root)
+        {
+
+            var diameter = 700,
+            format = d3.format(",d");
+
+            var pack = d3.layout.pack()
+                .size([diameter - 4, diameter - 4])
+                .value(function (d) { return d.value; });
+
+            var svg = d3.select("body").append("svg")
+                .attr("width", diameter)
+                .attr("height", diameter)
+              .append("g")
+                .attr("transform", "translate(2,2)");
+
+            
+            var color = d3.scale.linear()
+            .domain([-1, 5])
+            .range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])
+            .interpolate(d3.interpolateHcl);
+
+             node = svg.datum(Root).selectAll(".node")
+                    .data(pack.nodes)
+                  .enter().append("g")
+                    .attr("class", function (d) { return d.children ? "node" : "leaf node"; })
+                    .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+            node.append("title")
+                .text(function (d) { return d.name + (d.children ? "" : ": " + format(d.value)); });
+
+            node.append("circle")
+                .attr("r", function (d) { return d.r; })
+                .attr("fill", function (d) { return d.children ? color(d.depth) : d.color });
+
+            node.filter(function (d) { return !d.children; }).append("text")
+                .attr("dy", ".1em")
+                .style("text-anchor", "middle")
+                .style({"font-style":"calibri","font-weight":"bold","fill":"lightgrey"})
+                .text(function (d) { return d.value; });
+
+            node.filter(function (d) { return d.children && d.name != "main" })
+            .selectAll("circle").attr("class", "categories")
+            .each(
+            function (dat) {
+                svg.append("text")
+            .style({ "font-style": "calibri", "font-weight": "bold", "fill": "lightgrey","font-size":"2em","opacity":".7" })
+            .text(dat.name)
+                .attr("y", function () { return dat.y })
+                .attr("x", function () { return dat.x  -getTextWidth(dat.name,"bold 2em calibri")});
+            });
+
+
+            var legend = svg.selectAll(".legend")
+      .data(DateColor.domain())
+      .enter().append("g")
+      .attr("class", "legend")
+      .attr("transform", function (d, i) { return "translate(0," + i * 20 + ")"; });
+
+      legend.append("rect")
+                .attr("x", diameter - 18)
+                .attr("width", 18)
+                .attr("height", 18)
+                .style("fill", DateColor);
+
+      legend.append("text")
+                .attr("x", diameter - 24)
+                .attr("y", 9)
+                .attr("dy", ".35em")
+                .style("text-anchor", "end")
+                .text(function (d) { return d; });
+
+            d3.select(self.frameElement).style("height", diameter + "px");
+        }
+
+    </script>
+
+</body>
+</html>
