@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body { font: 12px Arial;}
+
+path { 
+	stroke: steelblue;
+	stroke-width: 2;
+	fill: none;
+}
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: grey;
+	stroke-width: 1;
+	shape-rendering: crispEdges;
+}
+
+</style>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+
+<script>
+
+Data=[{Category:"category1", 
+		Data:[{Date:"2016-05-23",Value:123},{Date:"2016-05-24",Value:635},{Date:"2016-05-25",Value:356},{Date:"2016-05-26",Value:102},{Date:"2016-05-27",Value:623}]},
+	 {Category:"category2", 
+		Data:[{Date:"2016-05-23",Value:896},{Date:"2016-05-24",Value:213},{Date:"2016-05-25",Value:485},{Date:"2016-05-26",Value:306},{Date:"2016-05-27",Value:902}]},
+		{Category:"category3", 
+		Data:[{Date:"2016-05-23",Value:358},{Date:"2016-05-24",Value:653},{Date:"2016-05-25",Value:732},{Date:"2016-05-26",Value:651},{Date:"2016-05-27",Value:213}]}]
+
+
+
+var	margin = {top: 30, right: 40, bottom: 30, left: 50},
+	width = 600 - margin.left - margin.right,
+	height = 270 - margin.top - margin.bottom;
+
+var	parseDate = d3.time.format("%d-%b-%y").parse;
+
+var	x = d3.scale.ordinal().rangePoints([0, width]);;
+var	y = d3.scale.linear().range([height, 0]);
+
+var	xAxis = d3.svg.axis().scale(x)
+	.orient("bottom");
+
+var	yAxis = d3.svg.axis().scale(y)
+	.orient("left").ticks(6);
+
+var	valueline = d3.svg.line()
+	.x(function(d) { return x(d.Date); })
+	.y(function(d) { return y(d.Value); });
+	
+
+
+var color=d3.scale.category10();
+  
+var	svg = d3.select("body")
+	.append("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+	.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	svg.selectAll("g").data(Data).enter().
+	append("g")	// Add the valueline2 path.
+	.each(function(d){
+		x.domain(d.Data.map(function(d) { return d.Date; }));
+		y.domain([0, 1000]);
+		d3.select(this).append("path").attr("class", "line")
+		.style("stroke", color(d.Category))
+		.attr("d", valueline(d.Data));
+	});
+	
+	svg.append("g")			// Add the X Axis
+		.attr("class", "x axis")
+		.attr("transform", "translate(0," + height + ")")
+		.call(xAxis);
+
+	svg.append("g")			// Add the Y Axis
+		.attr("class", "y axis")
+		.call(yAxis);
+
+
+
+</script>
+</body>
