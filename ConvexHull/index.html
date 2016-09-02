@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+		.line
+		{
+			stroke:black;
+			stroke-width:2px;
+			fill:none;
+		}
+	</style>
+	<script src="d3.js"></script>
+	<script src="particle.js"></script>
+	<script src="geom_utils.js"></script>
+	<script >
+		margin={top:50,bottom:100,left:50,right:50}
+		width=1000;
+		height=700;
+		var origin;
+		var links;
+		var particleHolder=[];
+		var edges=[];
+
+		var line = d3.svg.line()
+		.x(function(d) { return x(d.getX()/2000); })
+		.y(function(d) { return y(d.getY()/2000); });
+
+		var diagonal = d3.svg.diagonal()
+		.source(function(d) { return {"x":d[0].getX(), "y":d[0].getY()}; })            
+		.target(function(d) { return {"x":d[1].getX(), "y":d[1].getY()}; })
+
+		var x = d3.scale.linear()
+		.range([0, width]);
+
+		var y = d3.scale.linear()
+		.range([0, height]);
+
+		
+
+		/*for (var i = 0; i < 10; i++) 
+		{
+			a=particle.create();
+			a.height=height;
+			a.setX(Math.random()*(width-100) +1);
+			a.setY(Math.random()*(height-100) +1);
+			particleHolder.push(a);
+
+		}*/
+
+			a=particle.create();
+			a.height=height;
+			a.setX(500 +1);
+			a.setY(632 +1);
+			particleHolder.push(a);
+
+			a=particle.create();
+			a.height=height;
+			a.setX(15 +1);
+			a.setY(354 +1);
+			particleHolder.push(a);
+			
+			a=particle.create();
+			a.height=height;
+			a.setX(945 +1);
+			a.setY(62 +1);
+			particleHolder.push(a);
+			
+			a=particle.create();
+			a.height=height;
+			a.setX(761 +1);
+			a.setY(520 +1);
+			particleHolder.push(a);
+
+			a=particle.create();
+			a.height=height;
+			a.setX(961 +1);
+			a.setY(632 +1);
+			particleHolder.push(a);
+
+			a=particle.create();
+			a.height=height;
+			a.setX(125 +1);
+			a.setY(468 +1);
+			particleHolder.push(a);
+		
+		window.onload=function()
+		{
+
+			
+			svg=d3.select("#container")
+			.append("svg")
+			.style({"width":width+"px","height":height+"px"});
+
+			svg.selectAll("points").data(particleHolder).enter().append("circle").attr("cx",function(d){return d.getX()})
+			.attr("cy",function(d){return d.getY()})
+			.attr("r",2).style("fill","black")
+			.on('click',function(d){console.log(d.name+" x "+d.x+" y "+d.y+" ty "+ d.getY())});
+
+			particleHolder.sort(function(a,b){return a.y-b.y})
+			//particle.prototype.origin={x:particleHolder[0].x,y:particleHolder[0].y}
+			origin={x:particleHolder[0].x,y:particleHolder[0].y}
+			particleHolder.sort(function(a,b){return a.polarAngle()-b.polarAngle()})
+
+			particleHolder.sort(sortByPolarAngle)
+
+
+
+			
+
+			stack=new Array();
+
+			stack.push(particleHolder.splice(0,1)[0]);
+			stack.push(particleHolder.splice(0,1)[0]);
+
+
+			recursiveHullCreator(particleHolder,stack);
+			//links=diagonalCreator(stack);
+
+
+
+	       /*svg.selectAll(".link")
+	            .data(links)
+	            .enter().append("path")
+	            .attr("class", "line")
+	            .transition().delay(function(d,i){return i*200})
+	            .attr("d", diagonal);
+	            */
+	            
+	            var lines;
+	            function graph(stack,isend)
+	            {
+	            	// Updating the edges 
+	            	diagonalCreator(stack,edges,isend);
+	            	Sellines= svg.selectAll("line").data(edges);
+
+	            	lines=Sellines.enter().append("line").attr("class","line")
+	            	.style({"stroke":"black","stroke-width":"2px"})
+
+	            	.transition().duration(200)
+	            	.attr("x1",function(d){return d[0].getX()})
+	            	.attr("y1",function(d){return d[0].getY()})
+	            	.attr("x2",function(d){return d[1].getX()})
+	            	.attr("y2",function(d){return d[1].getY()});
+
+
+			        // Removing the edges
+			        console.log(Sellines.exit().style("stroke","blue"))
+
+			    }
+
+			    function recursiveHullCreator(points,stack)
+			    {
+			    	if(points.length>0)
+			    	{
+			    		newNode=points[0];
+
+			    		if(triangleSignedArea(stack[stack.length-2],stack[stack.length-1], newNode)<0)
+			    		{
+			    			stack.pop();
+			    			graph(stack);
+			    			recursiveHullCreator(points,stack);
+			    		}
+			    		else{
+			    			stack.push(points.splice(0,1)[0]);
+			    			graph(stack);
+			    			recursiveHullCreator(points,stack);
+			    		}
+			    	}
+			    	else{
+			    		return;
+			    	}
+
+			    }
+
+
+		}
+		/*
+		function recursiveHullCreator(points,stack)
+		{
+			newNode=points.splice(0,1);
+
+			while(triangleSignedArea(points[points.length-2],points[points.length-1], newNode)
+			{
+				stack.pop();
+			}
+			stack.push(newNode);
+		}
+
+		*/
+		
+
+
+
+	</script>
+</head>
+<body>
+	<div id ="container"></div>
+</body>
+</html>

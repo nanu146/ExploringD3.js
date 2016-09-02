@@ -21,7 +21,7 @@
     }
 </style>
 <body>
-    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
     <script>
         function getTextWidth(text, fontSize, fontName) {
             c = document.createElement("canvas");
@@ -136,14 +136,6 @@
           .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        /* d3.csv("Data/population.csv", function (error, data) {
-             if (error) throw error;
-             Data = data;
-             ageNames = d3.keys(data[0]).filter(function (key) { return key !== "State"; });
-
-             data.forEach(function (d) {
-                 d.ages = ageNames.map(function (name) { return { Name: name, value: +d[name] }; });
-             });*/
 
 
        
@@ -225,7 +217,8 @@
             .attr("x", function (d) { return x1(d.Name); })
             .attr("y", function (d) { return y(d.Value); })
             .attr("height", function (d) { return height - y(d.Value); })
-            .style("fill", function (d) { return color(d.Name); });
+            .style("fill", function (d) { return color(d.Name); })
+            .transition().duration(200).;
 
         // drawaing lines
         svg.selectAll(".lines").data(lineData).enter().append("g").attr("class", "line")
