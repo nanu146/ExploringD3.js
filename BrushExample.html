@@ -1,26 +1,53 @@
 <html>
 <head>
     <title>Brush Example</title>
+    <style type="text/css">
+        .lines{
+            fill:none;
+            stroke:lightgrey;
+            stroke-width:1px;
+        }
+        .dimention
+        {
+            fill:none;
+            stroke:black;
+            stroke-width:1px;
+            
+        }
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+    
     <script type="text/javascript">
         /////////// data variable declaration
-        var globaldata;
+        var globaldata,axis;
+        var dimentions;
+        // Supporting Functions
         
+
         window.onload=function(){
             margin={left:20,right:20,top:20,bottom:20}
             var height=600-margin.top-margin.bottom;
             var width=800-margin.left-margin.right;
+            var dimensionalscale={};
+            var xscale=d3.scale.ordinal().rangePoints([0,width],.1);
+            var dimentionalaxis={};
             
-            var xscale=d3.scale.ordinal().rangePoints([0,width],1);
+            // Declaring lIne generator
             
+            line =d3.svg.line();
+
             var svg=d3.select("body").append("svg")
             .style("height",height+margin.bottom+margin.top)
             .style("width",width+margin.left+margin.right);
-            
+
             graph=svg.append("g").style("transform","translate("+margin.left+"px,"+margin.top+"px)");
+
+            graph.append("rect").style({"width":width+"px","height":height+"px",fill:"none"})
             
-            graph.append("rect").style({"width":width+"px","height":height+"px",fill:"green"})
-                
+            
+            
+            
+            
             ///// getting data
             d3.csv("Parallel Coordinates/cars.csv",function(error, data){
                 if(!!error)
@@ -34,42 +61,66 @@
                 xscale.domain(dimentions);
                 console.log(xscale.domain());
                 console.log(dimentions.map(function(d,i){return xscale(d)}))
-                
+
                 //// Creating a seperate scale for each if the dimentions
+
                 
-                var dimensionalscale={};
-                dimentions.forEach(function(d,i){
+                    dimentions.forEach(function(d,i){
                     dimensionalscale[d]=d3.scale.linear().range([height,0]);
                 });
-                
+
                 // Filling the domain values for each of the dimention in dimentional scales
-                
+
                 dimentions.forEach(function(d,i){
                     dimensionalscale[d].domain(d3.extent(data.map(function(b,i){return +b[d]})));
                 });
-                globaldata=dimensionalscale;
-                console.log(dimensionalscale);
+                //globaldata=dimensionalscale;
+                //console.log(dimensionalscale);
+                
+                // Creating axis for each dimention
+                dimentions.forEach(function(d){
+                    dimentionalaxis[d]=d3.svg.axis().scale(dimensionalscale[d]).orient("left");
+                })
+                axis=dimentionalaxis;
                 
                 // Plotting circles with data
-                
+
                 graph.append("g").attr("class","circles").selectAll("circles").data(data)
-                .enter().append("circle").each(function(d,i){
+                .enter().append("g").each(function(d,i){
                     thisvalue=this;
-                    dimentions.forEach(function(b,j){
-                        val=b;
-                        scale=xscale(b);
-                        //console.log(scale);
-                        d3.select(thisvalue).attr("r",3)
-                            .attr("cx",function(c){/* console.log(val+ " " +b + xscale(b)+" "+scale );*/ return (function(){return xscale(b)}()) })
-                            .attr("cy",function(c){console.log(b+" "+c[b]+" "+dimensionalscale[b]( c[b]));return dimensionalscale[b]( c[b])})
+                        d3.select(thisvalue).selectAll("circles").data(dimentions).enter().append("circle").attr("r",3)
+                            .attr("cx",function(c){/* console.log(val+ " " +b + xscale(b)+" "+scale );*/ return xscale(c) })
+                            .attr("cy",function(c){return dimensionalscale[c]( d[c])})
                             .style("fill","blue");
-                    });
                     
+                    d3.select(thisvalue).append("path").attr("class","lines")
+                        .attr("d",function(d){ return LineGen(d) });
                 });
                 
-            })
+            console.log("----- at trrouble Location----------------")
+            console.log(dimentions);
             
+            
+            /// Positioning the axis
+            graph.append("g").attr("class","dimentionalaxis").selectAll("axis").data(dimentions).enter()
+            .append("g").attr("class", "dimention")
+            .each(function(b){
+                d3.select(this).append("g").attr("transform",function(d){ return "translate("+xscale(d)+"," + 0 + ")"})
+                .call( dimentionalaxis[b]);
+                
+             });
+            
+            
+
+            });// End of Ajax data load function
+           
+            
+        function LineGen(DataRow)
+        {
+            return line( dimentions.map(function(p){ return [ xscale(p), dimensionalscale[p](DataRow[p]) ] }))
         }
+            
+        }/* end of onload function*/
     </script>
 </head>
 <body>
