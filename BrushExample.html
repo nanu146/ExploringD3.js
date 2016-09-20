@@ -27,12 +27,62 @@
             visibility:visible !important;
             fill:none;
             stroke:none;
+            
         }
         .brusher .extent
         {
             visibility: visible !important;
-            fill:pink;
+            fill:#333;
             opacity: 0.5;
+            stroke:white;
+            stroke-width:1px;
+        }
+        
+        
+        .selectionTable 
+        {
+            background: white;
+            border-radius: 3px;
+            border-collapse: collapse;
+            height: 320px;
+            margin: auto;
+            max-width: 600px;
+            padding: 5px;
+            width: 100%;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            animation: float 5s infinite;
+        }
+
+        table 
+        {
+            display: table;
+            /*border-collapse: separate;*/
+            border-spacing: 2px;
+            border-color: grey;
+        }
+        
+        .selectionTable th.text-left 
+        {
+            text-align: left;
+        }
+        
+        .selectionTable th:first-child 
+        {
+            border-top-left-radius: 3px;
+        }
+        
+        .selectionTable th 
+        {
+            color: #D5DDE5;
+            background: #1b1e24;
+            border-bottom: 4px solid #9ea7af;
+            border-right: 1px solid #343a45;
+            font-size: 23px;
+            font-weight: 100;
+            padding: 24px;
+            text-align: left;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+            vertical-align: middle;
         }
         
     </style>
@@ -52,12 +102,12 @@
             var dimensionalscale={};
             var xscale=d3.scale.ordinal().rangePoints([0,width],.1);
             var dimentionalaxis={};
-            
+            var table;
             // Declaring lIne generator
             var line =d3.svg.line();
             
             // Declaring the brush
-            var brush=d3.svg.brush();
+            //var brush=d3.svg.brush();
 
             var svg=d3.select("body").append("svg")
             .style("height",height+margin.bottom+margin.top)
@@ -66,7 +116,6 @@
             graph=svg.append("g").style("transform","translate("+margin.left+"px,"+margin.top+"px)");
 
             graph.append("rect").style({"width":width+"px","height":height+"px",fill:"none"})
-            
             
             
             
@@ -91,6 +140,12 @@
                     dimentions.forEach(function(d,i){
                     dimensionalscale[d]=d3.scale.linear().range([height,0]);
                 });
+                
+                // Table declaration
+                // Table Headers will be added after extracting
+                table=d3.select("body").append("table").attr("class","selectionTable");
+                tableheaders=table.append("tr").selectAll("th").data(dimentions).enter()
+                    .append("th").text(function(d){return d});
 
                 // Filling the domain values for each of the dimention in dimentional scales
 
@@ -133,9 +188,17 @@
                 .call( dimentionalaxis[b]);
                 
                 // Creating the brushes
-                
-                brush.y(dimensionalscale[b]);
-                
+                var brush=d3.svg.brush();
+                brush.y(dimensionalscale[b])
+                //.on("brushmove",brushmove);
+                .on("brushend",function(){
+                    var extent=brush.extent();
+                    dataset=data.filter(function(dr){ return (dr[b]>=extent[0] && dr[b]<=extent[1])? true: false})
+                    console.log(dataset);
+                    table.selectAll("tr").data(dataset).enter().append("tr").each(function(dr){
+                        d3.select(this).selectAll("td").data(dimentions).enter().append("td").text(function(dm){return dr[dm]});
+                    })
+                })
                 
                 d3.select(this).append("g").attr("class","brusher")
                 .attr("transform","translate("+(xscale(b)-(30>>1))+",0)")
