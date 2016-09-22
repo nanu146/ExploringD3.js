@@ -2,6 +2,13 @@
 <head>
     <title>Brush Example</title>
     <style type="text/css">
+        .graphholder
+        {
+            margin-left: auto;
+            margin-right: auto;
+            width:800px;
+        }
+       
         .lines{
             fill:none;
             stroke:lightgrey;
@@ -44,7 +51,7 @@
             background: white;
             border-radius: 3px;
             border-collapse: collapse;
-            height: 320px;
+            height: 15;
             margin: auto;
             max-width: 600px;
             padding: 5px;
@@ -77,14 +84,96 @@
             background: #1b1e24;
             border-bottom: 4px solid #9ea7af;
             border-right: 1px solid #343a45;
-            font-size: 23px;
+            font-size: 18px;
             font-weight: 100;
-            padding: 24px;
+            padding: 20px;
             text-align: left;
             text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
             vertical-align: middle;
         }
-        
+        tr {
+            border-top: 1px solid #C1C3D1;
+            border-bottom-: 1px solid #C1C3D1;
+            color: #666B85;
+            font-size: 16px;
+            font-weight: normal;
+            text-shadow: 0 1px 1px rgba(256, 256, 256, 0.1);
+        }
+
+        tr {
+            display: table-row;
+            vertical-align: inherit;
+            border-color: inherit;
+        }
+        tr:hover td {
+          background:#4E5066;
+          color:#FFFFFF;
+          border-top: 1px solid #22262e;
+          border-bottom: 1px solid #22262e;
+        }
+ 
+        tr:first-child {
+          border-top:none;
+        }
+
+        tr:last-child {
+          border-bottom:none;
+        }
+
+        tr:nth-child(odd) td {
+          background:#EBEBEB;
+        }
+
+        tr:nth-child(odd):hover td {
+          background:#4E5066;
+        }
+
+        tr:last-child td:first-child {
+          border-bottom-left-radius:3px;
+        }
+
+        tr:last-child td:last-child {
+          border-bottom-right-radius:3px;
+        }
+
+        td {
+          background:#FFFFFF;
+          padding:20px;
+          text-align:left;
+          vertical-align:middle;
+          font-weight:300;
+          font-size:18px;
+          text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.1);
+          border-right: 1px solid #C1C3D1;
+        }
+
+        td:last-child {
+          border-right: 0px;
+        }
+
+        th.text-left {
+          text-align: left;
+        }
+
+        th.text-center {
+          text-align: center;
+        }
+
+        th.text-right {
+          text-align: right;
+        }
+
+        td.text-left {
+          text-align: left;
+        }
+
+        td.text-center {
+          text-align: center;
+        }
+
+        td.text-right {
+          text-align: right;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
     
@@ -93,14 +182,14 @@
         var globaldata,axis;
         var dimentions;
         // Supporting Functions
-        
+        var xscale;
 
         window.onload=function(){
-            margin={left:20,right:20,top:20,bottom:20}
+            margin={left:50,right:50,top:50,bottom:20}
             var height=600-margin.top-margin.bottom;
             var width=800-margin.left-margin.right;
             var dimensionalscale={};
-            var xscale=d3.scale.ordinal().rangePoints([0,width],.1);
+            xscale=d3.scale.ordinal().rangePoints([0,width],.1);
             var dimentionalaxis={};
             var table;
             // Declaring lIne generator
@@ -109,7 +198,7 @@
             // Declaring the brush
             //var brush=d3.svg.brush();
 
-            var svg=d3.select("body").append("svg")
+            var svg=d3.select("body").append("div").attr("class","graphholder").append("svg")
             .style("height",height+margin.bottom+margin.top)
             .style("width",width+margin.left+margin.right);
 
@@ -127,7 +216,7 @@
                         console.warn(error);
                     }
                 globaldata=data;
-                dimentions=Object.keys(data[0]).filter(function(d){return d!="name"});
+                dimentions=Object.keys(data[0]).filter(function(d){return d!="Name"});
                 console.log(dimentions);
                 console.log("--------------------------------------")
                 xscale.domain(dimentions);
@@ -144,7 +233,7 @@
                 // Table declaration
                 // Table Headers will be added after extracting
                 table=d3.select("body").append("table").attr("class","selectionTable");
-                tableheaders=table.append("tr").selectAll("th").data(dimentions).enter()
+                tableheaders=table.append("tr").selectAll("th").data(["Name"].concat(dimentions)).enter()
                     .append("th").text(function(d){return d});
 
                 // Filling the domain values for each of the dimention in dimentional scales
@@ -179,7 +268,7 @@
             console.log(dimentions);
             
             
-            /// Positioning the axis
+            /// Positioning the coordinates
             graph.append("g").attr("class","dimentionalaxis").selectAll("axis").data(dimentions).enter()
             .append("g").attr("class", "dimention")
             .each(function(b){
@@ -187,6 +276,11 @@
                 d3.select(this).append("g").attr("transform",function(d){ return "translate("+xscale(d)+"," + 0 + ")"})
                 .call( dimentionalaxis[b]);
                 
+                // Creating the lables
+                d3.select(this).append("g").attr("transform","translate(0,"+(-margin.top>>2)+" )")
+                .attr("class","lebleGroup").append("text").style({"font-family":"calibri","font-size":"13px","stroke":"1px","text-anchor":"middle"})
+                .attr("x",xscale(b))
+                .text(b)
                 // Creating the brushes
                 var brush=d3.svg.brush();
                 brush.y(dimensionalscale[b])
@@ -195,8 +289,11 @@
                     var extent=brush.extent();
                     dataset=data.filter(function(dr){ return (dr[b]>=extent[0] && dr[b]<=extent[1])? true: false})
                     console.log(dataset);
-                    table.selectAll("tr").data(dataset).enter().append("tr").each(function(dr){
-                        d3.select(this).selectAll("td").data(dimentions).enter().append("td").text(function(dm){return dr[dm]});
+                    //clearing the rows before 
+                    table.selectAll(".filteredData").remove();
+                    //Appending new data
+                    table.selectAll("tr").data(dataset).enter().append("tr").attr("class","filteredData").each(function(dr){
+                        d3.select(this).selectAll("td").data(["Name"].concat(dimentions)).enter().append("td").text(function(dm){return dr[dm]});
                     })
                 })
                 
