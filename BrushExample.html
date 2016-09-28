@@ -9,19 +9,24 @@
             width:800px;
         }
        
-        .lines{
+        .backgroundlines{
             fill:none;
-            stroke:lightgrey;
-            stroke-width:1px;
+            stroke:#ddd;
+            shape-rendering: crispEdges;
         }
-        .dimention
+        .foregroundlines{
+            fill:none;
+            stroke:steelblue;
+            
+        }
+        .dimension
         {
             fill:none;
             stroke:black;
-            stroke-width:1px;
+            
             
         }
-        .dimention text
+        .dimension text
         {
             fill:black;
             stroke:none;
@@ -180,8 +185,8 @@
     <script type="text/javascript">
         /////////// data variable declaration
         var globaldata,axis;
-        var dimentions;
-        // Supporting Functions
+        var dimensions;
+        var filtereddataset;
         var xscale;
 
         window.onload=function(){
@@ -190,7 +195,7 @@
             var width=800-margin.left-margin.right;
             var dimensionalscale={};
             xscale=d3.scale.ordinal().rangePoints([0,width],.1);
-            var dimentionalaxis={};
+            var dimensionalaxis={};
             var table;
             // Declaring lIne generator
             var line =d3.svg.line();
@@ -216,90 +221,149 @@
                         console.warn(error);
                     }
                 globaldata=data;
-                dimentions=Object.keys(data[0]).filter(function(d){return d!="Name"});
-                console.log(dimentions);
+                dimensions=Object.keys(data[0]).filter(function(d){return d!="Name"}).map(function(d){return {name:d} });
+                console.log(dimensions);
                 console.log("--------------------------------------")
-                xscale.domain(dimentions);
+                xscale.domain(dimensions.map(function(d){return d.name}));
                 console.log(xscale.domain());
-                console.log(dimentions.map(function(d,i){return xscale(d)}))
+                console.log(dimensions.map(function(d,i){return xscale(d.name)}))
 
-                //// Creating a seperate scale for each if the dimentions
+                //// Creating a seperate scale for each if the dimensions
 
                 
-                    dimentions.forEach(function(d,i){
-                    dimensionalscale[d]=d3.scale.linear().range([height,0]);
+                    dimensions.forEach(function(d,i){
+                    dimensionalscale[d.name]=d3.scale.linear().range([height,0]);
                 });
                 
                 // Table declaration
                 // Table Headers will be added after extracting
                 table=d3.select("body").append("table").attr("class","selectionTable");
-                tableheaders=table.append("tr").selectAll("th").data(["Name"].concat(dimentions)).enter()
+                tableheaders=table.append("tr").attr("class","tableheading").selectAll("th").data(["Name"].concat(dimensions.map(function(d){return d.name}))).enter()
                     .append("th").text(function(d){return d});
 
-                // Filling the domain values for each of the dimention in dimentional scales
+                // Filling the domain values for each of the dimension in dimensional scales
 
-                dimentions.forEach(function(d,i){
-                    dimensionalscale[d].domain(d3.extent(data.map(function(b,i){return +b[d]})));
+                dimensions.forEach(function(d,i){
+                    dimensionalscale[d.name].domain(d3.extent(data.map(function(b,i){return +b[d.name]})));
                 });
                 //globaldata=dimensionalscale;
                 //console.log(dimensionalscale);
                 
-                // Creating axis for each dimention
-                dimentions.forEach(function(d){
-                    dimentionalaxis[d]=d3.svg.axis().scale(dimensionalscale[d]).orient("left");
+                // Creating axis for each dimension
+                dimensions.forEach(function(d){
+                    dimensionalaxis[d.name]=d3.svg.axis().scale(dimensionalscale[d.name]).orient("left");
                 })
-                axis=dimentionalaxis;
+                axis=dimensionalaxis;
                 
                 // Plotting circles with data
 
-                graph.append("g").attr("class","circles").selectAll("circles").data(data)
+               /* graph.append("g").attr("class","tuples").selectAll("circles").data(data)
                 .enter().append("g").each(function(d,i){
                     thisvalue=this;
-                        d3.select(thisvalue).selectAll("circles").data(dimentions).enter().append("circle").attr("r",3)
-                            .attr("cx",function(c){/* console.log(val+ " " +b + xscale(b)+" "+scale );*/ return xscale(c) })
+                        d3.select(thisvalue).selectAll("circles").data(dimensions.map(function(d){return d.name;})).enter().append("circle").attr("r",3)
+                            .attr("cx",function(c){ return xscale(c) })
                             .attr("cy",function(c){return dimensionalscale[c]( d[c])})
                             .style("fill","blue");
-                    
-                    d3.select(thisvalue).append("path").attr("class","lines")
-                        .attr("d",function(d){ return LineGen(d) });
-                });
+                });*/
+                
+             // Background Lines
+                graph.append("g").attr("class","bacground").selectAll("backgroundlines").data(data).enter().append("path").attr("class","backgroundlines")
+                    .attr("d",function(d){return LineGen(d) } );
+
+                 //foreground lines
+                graph.append("g").attr("class","foreground").selectAll("backgroundlines").data(data).enter().append("path").attr("class","foregroundlines")
+                    .style("display","none")
+                    .attr("d", function(d){return LineGen(d) });
+                
                 
             console.log("----- at trrouble Location----------------")
-            console.log(dimentions);
+            console.log(dimensions);
             
             
             /// Positioning the coordinates
-            graph.append("g").attr("class","dimentionalaxis").selectAll("axis").data(dimentions).enter()
-            .append("g").attr("class", "dimention")
+            graph.append("g").attr("class","dimensionalaxis").selectAll("axis").data(dimensions).enter()
+            .append("g").attr("class", "dimension")
             .each(function(b){
                // Postioning the axis
-                d3.select(this).append("g").attr("transform",function(d){ return "translate("+xscale(d)+"," + 0 + ")"})
-                .call( dimentionalaxis[b]);
+                d3.select(this).append("g").attr("transform", "translate("+xscale(b.name)+"," + 0 + ")")
+                .call( dimensionalaxis[b.name]);
                 
                 // Creating the lables
                 d3.select(this).append("g").attr("transform","translate(0,"+(-margin.top>>2)+" )")
                 .attr("class","lebleGroup").append("text").style({"font-family":"calibri","font-size":"13px","stroke":"1px","text-anchor":"middle"})
-                .attr("x",xscale(b))
-                .text(b)
+                .attr("x",xscale(b.name))
+                .text(b.name)
                 // Creating the brushes
                 var brush=d3.svg.brush();
-                brush.y(dimensionalscale[b])
+                
+                // assigning brush to corresponding dimensional object
+                b.brush=brush;
+                dimensions.find(function(d){return d.name==b.name}).brush=b.brush;
+                
+                //initiating status to false
+                b.active=true;
+                dimensions.find(function(d){return d.name==b.name}).active=b.active;
+               
+                //console.log(dimensions.find(function(d){return d.name==b.name}));
+                //console.log(dimensions.find(function(d){return d.name==b.name}).brush.extent())
+                brush.y(dimensionalscale[b.name])
                 //.on("brushmove",brushmove);
-                .on("brushend",function(){
+                .on("brush",function(){
                     var extent=brush.extent();
-                    dataset=data.filter(function(dr){ return (dr[b]>=extent[0] && dr[b]<=extent[1])? true: false})
-                    console.log(dataset);
+                    // assigning local and grobal varaible of dimension
+                    b.active=!brush.empty()?true:false;
+                    
+                    dimensions.find(function(d){return d.name==b.name}).active=b.active;
+                    
+                    
+                    // Displaying lines which are selected
+                    if(!!dimensions.filter(function(d){return d.active }).length){
+                    d3.selectAll(".foregroundlines").each(function(d){
+                        
+                        d3.select(this)
+                        .style("display", function(c){ 
+                        return dimensions.filter(function(cond){return cond.active}).every(function(dimension)
+                            {
+                                return (c[dimension.name]>=dimension.brush.extent()[0] && c[dimension.name]<=dimension.brush.extent()[1])? true: false
+                            })?"block":"none";
+                        })});
+                    }
+                    else
+                    {
+                    
+                       d3.selectAll(".foregroundlines").style("display","none") 
+                    }
+                    
+                    
+                })
+                // for filtering out table results
+                    .on("brushend",function(){
+                    var extent=brush.extent();
+                    
+                    // assigning local and grobal varaible of dimension
+                    b.active=!brush.empty()?true:false;
+                    dimensions.find(function(d){return d.name==b.name}).active=b.active;
+                    
+                    dataset=data.filter(function(dr){ return dimensions.filter(function(cond){return cond.active}).every(function(dimension){
+                        return (dr[dimension.name]>=dimension.brush.extent()[0] && dr[dimension.name]<=dimension.brush.extent()[1])? true: false
+                    })});
+                    
+                    
                     //clearing the rows before 
                     table.selectAll(".filteredData").remove();
                     //Appending new data
-                    table.selectAll("tr").data(dataset).enter().append("tr").attr("class","filteredData").each(function(dr){
-                        d3.select(this).selectAll("td").data(["Name"].concat(dimentions)).enter().append("td").text(function(dm){return dr[dm]});
-                    })
+                    if(!!dimensions.filter(function(cond){return cond.active}).length){
+                        table.selectAll("tr:not(.tableheading)").data(dataset).enter().append("tr").attr("class","filteredData").each(function(dr){
+                            d3.select(this).selectAll("td").data(["Name"].concat(dimensions.map(function(d){return d.name}))).enter().append("td").text(function(dm){return dr[dm]});
+                        });
+                    }
+                    
                 })
                 
                 d3.select(this).append("g").attr("class","brusher")
-                .attr("transform","translate("+(xscale(b)-(30>>1))+",0)")
+                .attr("transform","translate("+(xscale(b.name)-(30>>1))+",0)")
                 .call(brush)
+                .call(brush.event)
                 .selectAll("rect").attr("width","30px");
                 
                 
@@ -312,9 +376,11 @@
             
         function LineGen(DataRow)
         {
-            return line( dimentions.map(function(p){ return [ xscale(p), dimensionalscale[p](DataRow[p]) ] }))
+            return line( dimensions.map(function(p){ return [ xscale(p.name), dimensionalscale[p.name](DataRow[p.name]) ] }))
         }
             
+        
+        
         }/* end of onload function*/
     </script>
 </head>
