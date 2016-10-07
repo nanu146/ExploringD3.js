@@ -1,0 +1,104 @@
+<html>
+    <head>
+        <title>Sierpinski Triangle</title>
+        <style type="text/css" >
+            #canvas{
+                width:700px;
+                height:500px;
+                margin-top:20px;
+            }
+            #filterpanal{
+                width:100%;
+                height:20px;
+                background-color: #e2e4e4;
+            }
+        </style>
+        <script type="text/javascript" src="point.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.6/d3.min.js"></script>
+        <script type="text/javascript">
+            var pA,pB,pC,xscake,yscale,data;
+            
+        window.onload=function(){
+            
+            var canvas = d3.select("#canvas").node();
+            context = canvas.getContext("2d"),
+            width = canvas.width = 700,
+            height = canvas.height = 500;
+            xscale=d3.scaleLinear().range([0,width])
+            yscale=d3.scaleLinear().range([height,0])
+            //context.translate(width / 2, height / 2);
+            data=[{X:324,Y:560},{X:0,Y:0},{X:648,Y:0}]
+            yscale.domain(d3.extent(data.map(function(d){return d.Y})));
+            xscale.domain(d3.extent(data.map(function(d){return d.X})));
+            
+            pA=point.create((data[0].X),yscale(data[0].Y));
+            pB=point.create(xscale(data[1].X),yscale(data[1].Y)); //
+            pC=point.create(xscale(data[2].X),yscale(data[2].Y)); //  
+
+            
+            iterations=+d3.select("#iteration").selectAll("option").filter(function(d){return this.selected}).node().value;
+            sierpinski(pA,pB,pC,iterations,"red");
+            d3.select("#iteration").on("change",function(d){
+                if(d3.select("#clearcontext").node().checked)
+                    {
+                        context.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                
+                sierpinski(pA,pB,pC,+d3.select("#iteration").selectAll("option").filter(function(d){return this.selected}).node().value,"red");
+                
+            })
+            
+            
+            function sierpinski(pa,pb,pc,limit,color)
+            {
+                if(limit>0)
+                {
+                    var p0=point.create(((pa.X+pb.X)/2),((pa.Y+pb.Y)/2))
+                    var p1=point.create(((pc.X+pb.X)/2),((pc.Y+pb.Y)/2))
+                    var p2=point.create(((pa.X+pc.X)/2),((pa.Y+pc.Y)/2))
+                    
+
+                    sierpinski(pa,p0,p2,limit-1,"red");
+                    sierpinski(p0,pb,p1,limit-1,"green");
+                    sierpinski(p2,p1,pc,limit-1,"blue");
+                    
+                    
+                }
+                else
+                {
+                    drawTriangle(pa,pb,pc,color);
+                }
+                
+            }
+            
+            function drawTriangle(p0, p1, p2,color) {
+                context.beginPath();
+                context.moveTo(p0.X, p0.Y);
+                context.lineTo(p1.X, p1.Y);
+                context.lineTo(p2.X, p2.Y);
+                context.fillStyle = color;
+                context.fill();
+            }
+            
+        }
+        </script>
+        
+    </head>
+    <body>
+        <div id="filterpanal">
+            <span> Number of iterations</span>
+            <select id="iteration">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8" selected="true">8</option>
+            </select>
+            <span><input type="checkbox" id="clearcontext" value="clear" checked="checked">clear context at rebuild</span>
+        </div>
+        <canvas id="canvas"></canvas>
+    </body>
+</html>
