@@ -2,6 +2,7 @@ var particle={
 	x:0,
 	y:0,
 	height:0,
+	name:"",
 	origin:{},
 	// dummy constructor 
 	create:function(){

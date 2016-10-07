@@ -11,7 +11,7 @@
 			fill:none;
 		}
 	</style>
-	<script src="d3.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.3.1/d3.min.js"></script>
 	<script src="particle.js"></script>
 	<script src="geom_utils.js"></script>
 	<script >
@@ -27,10 +27,10 @@
 		.x(function(d) { return x(d.getX()/2000); })
 		.y(function(d) { return y(d.getY()/2000); });
 
-		var diagonal = d3.svg.diagonal()
+		/*var diagonal = d3.svg.diagonal()
 		.source(function(d) { return {"x":d[0].getX(), "y":d[0].getY()}; })            
 		.target(function(d) { return {"x":d[1].getX(), "y":d[1].getY()}; })
-
+*/
 		var x = d3.scale.linear()
 		.range([0, width]);
 
@@ -39,7 +39,7 @@
 
 		
 
-		/*for (var i = 0; i < 10; i++) 
+		for (var i = 0; i < 10; i++) 
 		{
 			a=particle.create();
 			a.height=height;
@@ -47,43 +47,49 @@
 			a.setY(Math.random()*(height-100) +1);
 			particleHolder.push(a);
 
-		}*/
+		}
 
-			a=particle.create();
-			a.height=height;
-			a.setX(500 +1);
-			a.setY(632 +1);
-			particleHolder.push(a);
+		/*a=particle.create();
+		a.height=height;
+		a.name="three";
+		a.setX(500 +1);
+		a.setY(632 +1);
+		particleHolder.push(a);
 
-			a=particle.create();
-			a.height=height;
-			a.setX(15 +1);
-			a.setY(354 +1);
-			particleHolder.push(a);
-			
-			a=particle.create();
-			a.height=height;
-			a.setX(945 +1);
-			a.setY(62 +1);
-			particleHolder.push(a);
-			
-			a=particle.create();
-			a.height=height;
-			a.setX(761 +1);
-			a.setY(520 +1);
-			particleHolder.push(a);
+		a=particle.create();
+		a.height=height;
+		a.name="five";
+		a.setX(15 +1);
+		a.setY(354 +1);
+		particleHolder.push(a);
 
-			a=particle.create();
-			a.height=height;
-			a.setX(961 +1);
-			a.setY(632 +1);
-			particleHolder.push(a);
+		a=particle.create();
+		a.height=height;
+		a.name="one";
+		a.setX(945 +1);
+		a.setY(62 +1);
+		particleHolder.push(a);
 
-			a=particle.create();
-			a.height=height;
-			a.setX(125 +1);
-			a.setY(468 +1);
-			particleHolder.push(a);
+		a=particle.create();
+		a.height=height;
+		a.name="six";
+		a.setX(761 +1);
+		a.setY(520 +1);
+		particleHolder.push(a);
+
+		a=particle.create();
+		a.height=height;
+		a.name="two";
+		a.setX(961 +1);
+		a.setY(632 +1);
+		particleHolder.push(a);
+
+		a=particle.create();
+		a.height=height;
+		a.name="four";
+		a.setX(125 +1);
+		a.setY(468 +1);
+		particleHolder.push(a);*/
 		
 		window.onload=function()
 		{
@@ -132,21 +138,29 @@
 	            function graph(stack,isend)
 	            {
 	            	// Updating the edges 
-	            	diagonalCreator(stack,edges,isend);
-	            	Sellines= svg.selectAll("line").data(edges);
+	            	edgeCreator(edges,stack,isend);
+	            	Sellines= svg.selectAll(".line").data(edges);
 
 	            	lines=Sellines.enter().append("line").attr("class","line")
 	            	.style({"stroke":"black","stroke-width":"2px"})
 
 	            	.transition().duration(200)
-	            	.attr("x1",function(d){return d[0].getX()})
-	            	.attr("y1",function(d){return d[0].getY()})
-	            	.attr("x2",function(d){return d[1].getX()})
-	            	.attr("y2",function(d){return d[1].getY()});
+	            	.attr("x1",function(d){
+	            		return d[0].getX()
+	            	})
+	            	.attr("y1",function(d){
+	            		return d[0].getY()
+	            	})
+	            	.attr("x2",function(d){
+	            		return d[1].getX()
+	            	})
+	            	.attr("y2",function(d){
+	            		return d[1].getY()
+	            	});
 
 
 			        // Removing the edges
-			        console.log(Sellines.exit().style("stroke","blue"))
+			        console.log(Sellines.exit().style("stroke","blue"));
 
 			    }
 
@@ -155,7 +169,7 @@
 			    	if(points.length>0)
 			    	{
 			    		newNode=points[0];
-
+			    		// If Clock wise turn then deteminant will be negative which is not needed
 			    		if(triangleSignedArea(stack[stack.length-2],stack[stack.length-1], newNode)<0)
 			    		{
 			    			stack.pop();
@@ -169,13 +183,13 @@
 			    		}
 			    	}
 			    	else{
-			    		return;
+			    		graph(stack,true);
 			    	}
 
 			    }
 
 
-		}
+			}
 		/*
 		function recursiveHullCreator(points,stack)
 		{
