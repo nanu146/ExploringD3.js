@@ -1,0 +1,88 @@
+<html>
+<head>
+<title>Fractal Trees</title>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.6/d3.min.js"></script>
+<script type="text/javascript">
+    window.onload = function() {
+	var canvas = document.getElementById("canvas"),
+		context = canvas.getContext("2d"),
+		width = canvas.width = 800,
+		height = canvas.height = 800;
+
+	var p0 = {
+			x: width / 2,
+			y: height - 50
+		},
+		p1 = {
+			x: width / 2,
+			y: 50
+		},
+		branchAngle = randomRange(-Math.PI / 2, Math.PI / 2),
+		trunkRatio = 0.4
+
+    // attaching click event to tree gen button
+    d3.select("#treegen").on("click",function(d){
+        context.clearRect(0, 0, canvas.width, canvas.height);// Clearing the context
+        var p0 = {
+			x: width / 2,
+			y: height - 50
+		},
+		p1 = {
+			x: width / 2,
+			y: 50
+		};
+        
+        branchAngle = randomRange(-Math.PI / 2, Math.PI / 2);
+        tree(p0, p1, 9);
+    })
+	
+    function randomRange(min, max) {
+		return min + Math.random() * (max - min);
+	}
+
+	tree(p0, p1, 9);
+
+	function tree(p0, p1, limit) {
+		var dx = p1.x - p0.x,
+			dy = p1.y - p0.y,
+			dist = Math.sqrt(dx * dx + dy * dy),
+			angle = Math.atan2(dy, dx),
+			branchLength = dist * (1 - trunkRatio),
+			pA = {
+				x: p0.x + dx * trunkRatio,
+				y: p0.y + dy * trunkRatio
+			},
+			pB = {
+				x: pA.x + Math.cos(angle + branchAngle) * branchLength,
+				y: pA.y + Math.sin(angle + branchAngle) * branchLength,
+			},
+			pC = {
+				x: pA.x + Math.cos(angle  -branchAngle) * branchLength,
+				y: pA.y + Math.sin(angle - branchAngle) * branchLength,
+			};
+
+		context.beginPath();
+		context.moveTo(p0.x, p0.y);
+		context.lineTo(pA.x, pA.y);
+		context.stroke();
+
+		if(limit > 0) {
+			tree(pA, pC, limit - 1);
+			tree(pA, pB, limit - 1);
+		}
+		else {
+			context.beginPath();
+			context.moveTo(pB.x, pB.y);
+			context.lineTo(pA.x, pA.y);
+			context.lineTo(pC.x, pC.y);
+			context.stroke();
+		}
+	}
+};
+</script>
+</head>
+<body>
+<input type="button" value="Random Tree" id="treegen" style="top:0px;left:20px;float:left;margin-bottom:20px;">
+<canvas id="canvas" ></canvas>
+    </body>
+</html>
