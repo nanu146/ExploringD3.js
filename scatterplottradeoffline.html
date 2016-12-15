@@ -39,15 +39,14 @@ padding:10px;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
 <script>
 
-// Global variable declaration of regression line equation
-var regression;
 var radius=700;
-var margin = {top: 20, right:20 , bottom: 20, left: 160},
+var margin = {top: 90, right:90 , bottom: 20, left: 160},
     width = (700/Math.sqrt(2)),
     height = (700/Math.sqrt(2)) ;
     var result;
-
-var piedata=[{value:1,name:"uh"},{value:1,name:"lh"}]
+var pie;
+    
+var piedata=[{value:1,name:"uh",text:"High protein cereals"},{value:1,name:"lh",text:"High fat cereals"}]
 
 var x = d3.scale.linear()
     .range([0, width]);
@@ -72,11 +71,11 @@ var svg = d3.select("body").append("svg")
     .attr("height", radius + margin.top + margin.bottom);
   
 var chart=svg.append("g")
-    .attr("transform", "translate(" + margin.left + "," + (radius-height)+margin.top + ")");
+    .attr("transform", "translate(" + (margin.left) + "," + ((radius-height)+margin.top) + ")");
 
 d3.csv("datasets/cereal.csv", function(error, data) {
   if (error) throw error;
-result=data;
+    result=data;
 
   data.forEach(function(d) {
     d.Protein = +d.Protein;
@@ -97,32 +96,43 @@ result=data;
 
 var XaxisData = data.map(function(d) { return d.Fat; });
 var YaxisData = data.map(function(d) { return d.Protein; });
-regression=leastSquaresequation(XaxisData,YaxisData);
 
+
+    
 
 var arc = d3.svg.arc()
     .outerRadius(radius)
     .innerRadius(0);
 
-var pie = d3.layout.pie()
+pie = d3.layout.pie()
     .sort(null)
-    .startAngle(2*Math.PI)
-    .endAngle(2.5*Math.PI)
+    .startAngle(0* Math.PI)
+    .endAngle(.5*Math.PI)
     .value(function(d) { return d.value; });
 
+// code for text arc angle calc
+piedata.forEach(function(d,i){
+    d.textspecs={}
+    slotangle=(pie.endAngle()-pie.startAngle())/piedata.length;
+    d.textspecs.startangle= pie.startAngle()+(i+.1)*slotangle;
+    d.textspecs.endangle=pie.startAngle()+(i+.9)*slotangle;
+});
+// end of code for text arc angle calc
 
-var g = chart.append("g").attr("class","semicircle").attr("transform","translate(" + 0 + "," + height + ")").selectAll(".arc")
+var semicircle = chart.append("g").attr("class","semicircle").attr("transform","translate(" + 0 + "," + height + ")").selectAll(".arc")
   .data(pie(piedata))
 .enter().append("g")
   .attr("class", "arc");
 
-g.append("path")
+semicircle.append("path")
   .style("fill", function(d) { console.log(arccolor(d.data.name),d.data.name);return arccolor(d.data.name); })
   .attr("d",function(d){return arc(d)})
     .on("mousemove",function(d){
     d3.select(".tooltip").style("left",function(d){return (d3.event.pageX+10)+"px"}).style("top",function(d){ return (d3.event.pageY-50)+"px"});
         d3.select(".tooltip").style("visibility","visible");
-        d3.select(".tooltip").text(d.name=="uh"?"High protien cereals":"High fat cereals");
+        d3.select(".tooltip").text(d.data.name=="uh"?"High protien cereals":"High fat cereals");
+}).on("mouseout",function(d){
+    d3.select(".tooltip").style("visibility","hidden")
 });
     
 
@@ -165,22 +175,30 @@ var line = d3.svg.line()
       .style("fill", function(d) { return color(d.Manufacturer)}).
       style("stroke"," lightgrey" ).style("stroke-width","1px");
 
-  chart.append("path")
-      .datum([{x:0,y:height},{x:width,y:0}])
-      .attr("class", "line")
-      .attr("d", line)
-      .on("mousemove",function(){
-        d3.select(".tooltip").style("left",function(d){return (d3.event.pageX+10)+"px"}).style("top",function(d){ return (d3.event.pageY-50)+"px"});
-        d3.select(".tooltip").style("visibility","visible");
-        CompProtients=parseFloat(regression(x.invert(d3.event.pageX-svg.node().getBoundingClientRect().left-margin.left))).toFixed(3);
-        d3.select(".tooltip").text("computed protien is "+CompProtients)
-        
-      })
-      .on("mouseout",function(){
-          d3.select(".tooltip").style("visibility","hidden");
+ 
+//Experimental curved text code
+    svg.append("g").attr("transform","translate("+margin.left+","+margin.top+")").selectAll("expcircles").data(piedata).enter().append("g").attr("class","division").each(function(d){
+            d3.select(this).append("circle").attr("r",4).attr("cx",function(c){return (radius+40)*Math.cos(c.textspecs.startangle)})
+            .attr("cy",function(c){return radius- ((radius+40)*Math.sin(c.textspecs.startangle))}).style("fill","black")
 
-      });
-
+            d3.select(this).append("circle").attr("r",4).attr("cx",function(c){return (radius+40)*Math.cos(c.textspecs.endangle)})
+            .attr("cy",function(c){return radius- ((radius+40)*Math.sin(c.textspecs.endangle))}).style("fill","black")
+            
+            var p1={}
+            var p2={}
+            
+            p1.x=(radius+40)*Math.cos(d.textspecs.startangle)
+            p1.y=radius- ((radius+40)*Math.sin(d.textspecs.startangle))
+            
+            p2.x=(radius+40)*Math.cos(d.textspecs.endangle)
+            p2.y=radius- ((radius+40)*Math.sin(d.textspecs.endangle))
+            
+            d3.select(this).append("path").style({"stroke":"blue","stroke-width":"1px","fill":"none"}).attr("id","textpath"+d.name).attr("d","M "+p1.x+" "+p1.y+" A "+(radius+40)+","+(radius+40)+"  0 0,0 "+p2.x+" "+p2.y+"");
+            
+            d3.select(this).append("text").style("font","30px cambria").append("textPath").attr("xlink:href","#textpath"+d.name).attr({"startOffset":"50%","text-anchor":"middle"}).text(d.text)
+    })
+// end of experimental curved text code
+    
   var legend = svg.selectAll(".legend")
       .data(color.domain())
     .enter().append("g")
@@ -202,32 +220,9 @@ var line = d3.svg.line()
 
 });
 
-
-
-
-function leastSquaresequation(XaxisData, Yaxisdata) {
-    var ReduceAddition = function(prev, cur) { return prev + cur; };
     
-    // finding the mean of Xaxis and Yaxis data
-    var xBar = XaxisData.reduce(ReduceAddition) * 1.0 / XaxisData.length;
-    var yBar = Yaxisdata.reduce(ReduceAddition) * 1.0 / Yaxisdata.length;
-
-    var SquareXX = XaxisData.map(function(d) { return Math.pow(d - xBar, 2); })
-      .reduce(ReduceAddition);
+function arcCreator(radius,starting){
     
-    var ssYY = Yaxisdata.map(function(d) { return Math.pow(d - yBar, 2); })
-      .reduce(ReduceAddition);
-      
-    var MeanDiffXY = XaxisData.map(function(d, i) { return (d - xBar) * (Yaxisdata[i] - yBar); })
-      .reduce(ReduceAddition);
-      
-    var slope = MeanDiffXY / SquareXX;
-    var intercept = yBar - (xBar * slope);
-    
-// returning regression function
-    return function(x){
-      return x*slope+intercept
-    }
+}
 
-  }
 </script>
