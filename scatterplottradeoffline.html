@@ -89,7 +89,7 @@ d3.csv("datasets/cereal.csv", function(error, data) {
 
 
 
-  x.domain(d3.extent(data, function(d) { return d.Fat; })).nice();
+  x.domain([0,d3.max(data, function(d) { return d.Protein; })]).nice();
   y.domain([0,d3.max(data, function(d) { return d.Protein; })]).nice();
 
 
@@ -109,16 +109,23 @@ pie = d3.layout.pie()
     .startAngle(0* Math.PI)
     .endAngle(.5*Math.PI)
     .value(function(d) { return d.value; });
+    
+//  Reversing the piedata array to adjust the elements to work in 4th quadrant 
+piedata.reverse();
 
 // code for text arc angle calc
 piedata.forEach(function(d,i){
     d.textspecs={}
     slotangle=(pie.endAngle()-pie.startAngle())/piedata.length;
-    d.textspecs.startangle= pie.startAngle()+(i+.1)*slotangle;
-    d.textspecs.endangle=pie.startAngle()+(i+.9)*slotangle;
+    d.textspecs.startangle= pie.startAngle()+(i+.9)*slotangle;
+    d.textspecs.endangle=pie.startAngle()+(i+.1)*slotangle;
 });
+    
+piedata.reverse();
 // end of code for text arc angle calc
 
+    
+// Code for semi-circle
 var semicircle = chart.append("g").attr("class","semicircle").attr("transform","translate(" + 0 + "," + height + ")").selectAll(".arc")
   .data(pie(piedata))
 .enter().append("g")
@@ -134,7 +141,7 @@ semicircle.append("path")
 }).on("mouseout",function(d){
     d3.select(".tooltip").style("visibility","hidden")
 });
-    
+// end of code for semi-circle
 
 
 var line = d3.svg.line()
@@ -193,7 +200,7 @@ var line = d3.svg.line()
             p2.x=(radius+40)*Math.cos(d.textspecs.endangle)
             p2.y=radius- ((radius+40)*Math.sin(d.textspecs.endangle))
             
-            d3.select(this).append("path").style({"stroke":"blue","stroke-width":"1px","fill":"none"}).attr("id","textpath"+d.name).attr("d","M "+p1.x+" "+p1.y+" A "+(radius+40)+","+(radius+40)+"  0 0,0 "+p2.x+" "+p2.y+"");
+            d3.select(this).append("path").style({"stroke":"blue","stroke-width":"1px","fill":"none"}).attr("id","textpath"+d.name).attr("d","M "+p1.x+" "+p1.y+" A "+(radius+40)+","+(radius+40)+"  0 0,1 "+p2.x+" "+p2.y+"");
             
             d3.select(this).append("text").style("font","30px cambria").append("textPath").attr("xlink:href","#textpath"+d.name).attr({"startOffset":"50%","text-anchor":"middle"}).text(d.text)
     })
@@ -220,9 +227,5 @@ var line = d3.svg.line()
 
 });
 
-    
-function arcCreator(radius,starting){
-    
-}
-
+ 
 </script>
